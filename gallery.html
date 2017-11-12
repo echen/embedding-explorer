@@ -1,0 +1,308 @@
+<svg width="960" height="50" id="slider"></svg>
+
+<div id="scatterplots"></div>
+<div id="scatterplot" class="scatterplot">
+</div>
+
+<div>
+  <ul id="words">
+  </ul>
+</div>
+
+<div>
+  <h3 id="reset">Reset</h3>
+</div>
+
+<div id="clusters" class="container">
+  <div class="row" id="clusters_row">
+  </div>
+</div>
+
+<div id="embeddings" class="container">
+  <div class="row" id="embeddings_row">
+  </div>
+</div>
+
+<script>
+function getPoints(data) {
+  var keys = data["columns"];
+  
+  var points = [];
+  for (var i = 0; i < data["data"].length; i++) {
+    var p = {};
+    
+    for (var j = 0; j < keys.length; j++) {
+      p[keys[j]] = data["data"][i][j];
+    }
+    
+    points.push(p);
+  };  
+  
+  return points;
+}
+d3.json("data/embedding.json", function(err, data) {
+  var WIDTH = 600,
+      HEIGHT = 600;
+    
+  var points = getPoints(data);
+  
+  // setup x 
+  var xValue = function(d) { return d["t0"]; }, // data -> value
+      xScale = d3.scaleLinear().range([0, WIDTH]), // value -> display
+      xMap = function(d) { return xScale(xValue(d));}; // data -> display
+
+  // setup y
+  var yValue = function(d) { return d["t1"]; }, // data -> value
+      yScale = d3.scaleLinear().range([HEIGHT, 0]), // value -> display
+      yMap = function(d) { return yScale(yValue(d));}; // data -> display      
+
+  xScale.domain([d3.min(points, xValue) - 1, d3.max(points, xValue) + 1]);
+  yScale.domain([d3.min(points, yValue) - 1, d3.max(points, yValue) + 1]);      
+  
+  
+  var color = d3.scaleOrdinal(d3.schemeCategory20);
+  
+  var svg = 
+    d3.select("#scatterplots")
+      .append("div").classed("scatterplot", true)
+      .append("svg")
+      .attr("width", WIDTH)
+      .attr("height", HEIGHT);
+      
+  var origSvg = svg;
+      
+  var svgChild = 
+    d3.select("#scatterplots")
+      .append("div").classed("scatterplot", true)
+      .append("svg")
+      .attr("width", WIDTH)
+      .attr("height", HEIGHT);      
+
+  var tooltip = d3.select("body").append("div")	
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+  var circles = [];
+                        
+  var recentWords = [];
+  function draw(selector, data, cluster = -1) {
+    selector.html("");
+    
+    selector.selectAll("circle")
+      .data(data)
+      .enter()
+      .append("circle")
+      .attr("cx", xMap)
+      .attr("cy", yMap)
+      .style("stroke", "black")
+      .style("stroke-opacity", function(d) {
+        if (cluster != -1) {
+          if (d.cluster == cluster) {
+            return 1.0;
+          } else {
+            return 0;
+          }
+        } else {
+          return 0;
+        }        
+      })
+      .attr("r", function(d) {
+        if (cluster != -1) {
+          if (d.cluster == cluster) {
+            return 5;
+          } else {
+            return 3;
+          }
+        } else {
+          return 3;
+        }        
+      })
+      .attr('fill-opacity', function(d) {
+        if (cluster != -1) {
+          if (d.cluster == cluster) {
+            return 0.95;
+          } else {
+            return 0.05;
+          }
+        } else {
+          return 0.8;
+        }
+      })      
+      .style("fill", function(d) { return color(d.cluster); })
+      .on("mouseover", function(d) {                    
+        if (recentWords.length >= 10) {
+          recentWords.shift();
+        }
+        recentWords.push("Cluster " + d.cluster + " - " + d.word);
+
+        d3.select("#words").html("");
+        d3.select("#words").selectAll("li").data(recentWords).enter().append("li").text(function(x) { return x; });
+
+        tooltip
+          .transition()
+          .duration(200)
+          .style("opacity", 1);
+
+        tooltip
+          .text(d.word)
+          .style("left", (d3.event.pageX) + "px")		
+          .style("top", (d3.event.pageY - 28) + "px");
+      })
+      .on("mouseout", function(d) {        
+        tooltip.html("");
+      });
+  }
+  draw(svg, points, -1);
+     
+  $("#reset").on("click", function(d) {    
+    draw(svg, points, -1);
+  });
+  var num_clusters = _.unique(_.map(points, function(x) { return x["cluster"]; }));
+  for (var i = 0; i < num_clusters.length; i++) {
+    var clusterps = _.filter(points, function(x) { return x["cluster"] == i; });
+    var ps = _.sample(clusterps, 10);
+    
+    var cluster = d3.select("#clusters_row")
+      .append("div")
+      .attr("class", "col-md-3");
+    
+    cluster
+      .datum([i, clusterps])
+      .append("h3").text("Cluster " + i)
+      .on("click", function(d) {
+        var i = d[0];
+        var clusterps = d[1];
+        draw(svg, points, i);
+        draw(svgChild, clusterps, i, true);
+      });
+      
+    var list = cluster
+      .append("ul");
+    
+    list
+      .selectAll("li")
+      .data(ps)
+      .enter()
+      .append("li")
+      .html(function(x) { return x["word"]; });
+  }
+  
+  
+  
+  
+  for (var i = 0; i < 10; i++) {
+    var ps = _.sortBy(points, function(x) { return x["dim" + i]; });
+    var topPs = _.last(ps, 10).reverse();
+    var bottomPs = _.first(ps, 10);
+
+    
+    var embeddings1 = d3.select("#embeddings_row")
+      .append("div")
+      .attr("class", "col-md-3");
+      
+      var embeddings2 = d3.select("#embeddings_row")
+        .append("div")
+        .attr("class", "col-md-3");      
+    
+    embeddings1
+      .datum([i, topPs, bottomPs])
+      .append("h3").text("Top Embedding " + i)
+      .append("ul");
+      
+      embeddings2
+        .datum([i, topPs, bottomPs])
+        .append("h3").text("Bottom Embedding " + i)
+        .append("ul");
+              
+/*      .on("click", function(d) {
+        var i = d[0];
+        var clusterps = d[1];
+        draw(svg, points, i);
+        draw(svgChild, clusterps, i, true);
+      });*/
+      
+
+    embeddings1
+      .selectAll("li")
+      .data(topPs)
+      .enter()
+      .append("li")
+      .html(function(x) { return x["word"]; });    
+      
+      embeddings2
+        .selectAll("li")
+        .data(bottomPs)
+        .enter()
+        .append("li")
+        .html(function(x) { return x["word"]; });      
+  }
+  
+  
+  
+  
+  var dim = "dim0";
+  var dim0 = _.map(points, function(p) { return p.dim0; });  
+  var dim0_min = _.min(dim0);
+  var dim0_max = _.max(dim0);
+  
+  var svg = d3.select("svg"),
+      margin = {right: 50, left: 50},
+      width = +svg.attr("width") - margin.left - margin.right,
+      height = 20;
+
+  var x = d3.scaleLinear()
+      .domain([dim0_min, dim0_max])
+      .range([0, width])
+      .clamp(true);
+
+  var slider = svg.append("g")
+      .attr("class", "slider")
+      .attr("transform", "translate(" + margin.left + "," + height / 2 + ")");
+
+  slider.append("line")
+      .attr("class", "track")
+      .attr("x1", x.range()[0])
+      .attr("x2", x.range()[1])
+    .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+      .attr("class", "track-inset")
+    .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+      .attr("class", "track-overlay")
+      .call(d3.drag()
+          .on("start.interrupt", function() { slider.interrupt(); })
+          .on("start drag", function() { hue(x.invert(d3.event.x)); }));
+
+  slider.insert("g", ".track-overlay")
+      .attr("class", "ticks")
+      .attr("transform", "translate(0," + 18 + ")")
+    .selectAll("text")
+    .data(x.ticks(10))
+    .enter().append("text")
+      .attr("x", x)
+      .attr("text-anchor", "middle")
+      .text(function(d) { return d + "°"; });
+
+  var handle = slider.insert("circle", ".track-overlay")
+      .attr("class", "handle")
+      .attr("r", 9);
+
+  function sigmoid(t) {
+    return 1/(1+Math.pow(Math.E, -t));
+  }
+
+  function hue(h) {
+    origSvg.selectAll("circle").data(points)
+      .attr("r", function(p) {
+        var x  =Math.pow(sigmoid(1.0 / (Math.pow(h - p[dim], 2) + 0.01)), 4) * 10;
+        if (x > 9.5) {// (Math.abs(h - p[dim]) < 0.1) {
+          console.log(p.word);
+        }
+        return x;
+      })
+      .attr("fill-opacity", function(p) {
+        return Math.pow(sigmoid(1.0 / (Math.pow(h - p[dim], 2) + 0.01)), 4);
+      })
+  }
+  
+  
+});
+</script>
