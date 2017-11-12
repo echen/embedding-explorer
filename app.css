@@ -16,7 +16,7 @@ body {
   
   margin-left: auto;
   margin-right: auto;
-  min-width: 98% !important;
+  min-width: 99% !important;
 }
 
 .tooltip {
@@ -41,21 +41,12 @@ circle:hover {
   fill-opacity: 1 !important;
 }
 
-.right-divider {
-/*  border-right-color: rgba(0, 0, 0, .5);
-  border-right-style: solid;
-  border-right-width: 0.1;*/
-}
 text {
   background-color: white;
 }
 
 ul {
   padding-left: 1.5em;
-/*  list-style-type: none;
-  padding: 0;
-  margin: 0;
-  text-align: center;*/
 }
 
 ul.nolist {
@@ -80,15 +71,17 @@ ul.nolist {
 
 .linklike {
   text-decoration: underline;
-  cursor: pointer;
+  cursor: pointer !important;
+}
+
+.scatterplot {
+  padding: 0px !important;
 }
 
 
 
 
-
-
-
+/* SLIDER */
 .ticks {
   font: 10px sans-serif;
 }
@@ -125,16 +118,9 @@ ul.nolist {
 }
 
 
+/* HORIZONTAL BAR CHART */
 .bar {
   padding: 5px;
-}
-
-.bar--positive {
-  fill: steelblue;
-}
-
-.bar--negative {
-  fill: brown;
 }
 
 .axis text {

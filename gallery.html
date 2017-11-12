@@ -1,25 +1,17 @@
 <div id="scatterplots" class="container-fluid">
   <div class="row">
-    <div id="barchart" class="col-sm-3"></div>    
-    <div id="main_scatterplot" class="scatterplot col-sm-4 right-divider"></div>
-    <div id="cluster_scatterplot" class="scatterplot col-sm-4"></div>
     <div id="info" class="col-sm-1">
       <div>
-        <ul id="words" class="scrollbox20 nolist">
-        </ul>
+        <ul id="words" class="scrollbox20 nolist"></ul>
       </div>
     </div>
+         
+    <div id="main_scatterplot" class="scatterplot col-sm-4 right-divider"></div>
+    <div id="cluster_scatterplot" class="scatterplot col-sm-4"></div>
+
+    <div id="barchart" class="col-sm-3 scatterplot"></div>   
   </div>
 </div>
-
-<!--<div id="quantiles" class="container-fluid">
-  <div class="row">
-    <div id="s1" class="scatterplot col"></div>
-    <div id="s2" class="scatterplot col"></div>
-    <div id="s3" class="scatterplot col"></div>
-    <div id="s4" class="scatterplot col"></div>        
-  </div>
-</div>-->
 
 <div>
   <select id="dimension_select"></select>
@@ -43,13 +35,16 @@
 
 <script>
 function updateBarchart(point) {
-  console.log(point);
-  var margin = { top: 20, right: 20, bottom: 40, left: 30 };
+  // HACK
+  d3.select("#barchart").style("opacity", 1);
   
-  var width = 200 - margin.left - margin.right;
+  var margin = { top: 0, right: 5, bottom: 0, left: 5 };
+  
+  var width = 275 - margin.left - margin.right;
   // X scale
-  var x = d3.scaleLinear().range([0, width]);
-  
+  var x = d3.scaleLinear().domain([-3, 3]).range([0, width]);
+
+  var colorScale = d3.scaleLinear().range([0, 1]).domain([-3, 3]);
   
   var data = [];
   for (var i = 0; i < 10; i++) {
@@ -59,15 +54,25 @@ function updateBarchart(point) {
       value: point["dim" + i]      
     });
     
+    var v = point["dim" + i];
     d3.select("#bar" + i)
-      .transition().delay(0).duration(500)
+      .transition().delay(0).duration(200)
+      .attr('class', function (d) {
+        return "bar bar--" + (v < 0 ? "negative" : "positive");
+      })
+      .attr("fill", function(d) { return d3.interpolateRdBu(colorScale(v)); })
+      .attr('x', function (d) {return margin.left + x(Math.min(0, v));})
+      .attr('width', function (d) {return Math.abs(x(v) - x(0));})
+      .attr('height', 45);
+      
+      /*
       .attr('x', function (d) {return x(Math.min(0, point["dim" + i]));})      
-      .attr('width', function (d) {return Math.abs(x(point["dim" + i]) - x(0));});
+      .attr('width', function (d) {return Math.abs(x(point["dim" + i]) - x(0));});*/
   };    
 }
 function barchart(point) {
   var data = [];
-  for (var i = 0; i < 10; i++) {
+  for (var i = 9; i >= 0; i--) {
     data.push({
       i: i,
       name: "dim" + i,
@@ -75,9 +80,9 @@ function barchart(point) {
     });
   }
 
-  var margin = { top: 20, right: 20, bottom: 40, left: 30 };
-  var height = 550 - margin.top - margin.bottom;
-  var width = 200 - margin.left - margin.right;
+  var margin = { top: 0, right: 5, bottom: 0, left: 5 };
+  var height = 500 - margin.top - margin.bottom;
+  var width = 275 - margin.left - margin.right;
 
   // Add svg to
   var svg = 
@@ -89,50 +94,23 @@ function barchart(point) {
       .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
   // X scale
-  var x = d3.scaleLinear().range([0, width]);
-  var y = d3.scaleBand().rangeRound([height, 0]);
+  var x = d3.scaleLinear().domain([-3, 3]).range([0, width]);
+  var y = d3.scaleBand().domain(data.map(function (d) {return d.name;})).rangeRound([height, 0]);
 
 
   var yAxis = 
     d3.axisLeft(y);
-//      .tickSize(6, 0);
 
-  x.domain(d3.extent(data, function (d) {return d.value;})).nice();
-  y.domain(data.map(function (d) {return d.name;}));
 
   svg
     .selectAll('.bar')
     .data(data)
     .enter().append('rect')
       .attr("id", function(d) { return "bar" + d.i; })
-      .attr('class', function (d) {
-        return "bar bar--" + (d.value < 0 ? "negative" : "positive");
-      })
       .attr('x', function (d) {return x(Math.min(0, d.value));})
       .attr('y', function (d) {return y(d.name);})
       .attr('width', function (d) {return Math.abs(x(d.value) - x(0));})
-      .attr('height', 45);
-
-  var tickNegative = 
-    svg.append('g')
-      .attr('class', 'y axis')
-      .attr('transform', 'translate(' + x(0) + ',0)')
-      .call(yAxis);
-      /*.selectAll('.tick')
-      .filter(function (d, i) {return data[i].value < 0;});
-
-  tickNegative.select('line').
-  attr('x2', 6);
-
-  tickNegative.select('text').
-  attr('x', 9).
-  style('text-anchor', 'start');*/
-
-
-  function type(d) {
-    d.value = +d.value;
-    return d;
-  }
+      .attr('height', 40);
 };
 function getPoints(data) {
   var keys = data["columns"];
@@ -156,7 +134,9 @@ d3.json("data/embedding.json", function(err, data) {
     
   var points = getPoints(data);
   
+  // HACK  
   barchart(points[0]);
+  d3.select("#barchart").style("opacity", 0);
   
   
   var color = d3.scaleOrdinal(d3.schemeCategory20);
@@ -252,7 +232,7 @@ d3.json("data/embedding.json", function(err, data) {
         } else {
           r = 3;
         }
-        d3.select(this).transition().delay(0).duration(75).attr("r", 20).attr("fill-opacity", 1).attr("stroke-width", 2).attr("stroke-opacity", 1); 
+        d3.select(this).transition().delay(0).duration(75).attr("r", 20).attr("fill-opacity", 1).attr("stroke-width", 2).attr("stroke-opacity", 1).transition().duration(75).attr("r", 10);
         
         //.transition();//.duration(300).attr("r", r);
 //        d3.select(this).attr("r", 15);
@@ -309,7 +289,7 @@ d3.json("data/embedding.json", function(err, data) {
     
     cluster
       .datum([i, clusterPoints])
-      .append("h5").text("Cluster " + (i + 1)).classed("linklike", true).style("color", function(d) { return color(d[0]); })
+      .append("h5").html("<span class='linklike'>Cluster " + (i + 1) + "</span>").classed("linklike", true).style("color", function(d) { return color(d[0]); })
       .on("click", function(d) {
         var i = d[0];
         var clusterPoints = d[1];
