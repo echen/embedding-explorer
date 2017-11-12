@@ -1,29 +1,139 @@
-<svg width="960" height="50" id="slider"></svg>
-
-<div id="scatterplots"></div>
-<div id="scatterplot" class="scatterplot">
+<div id="scatterplots" class="container-fluid">
+  <div class="row">
+    <div id="barchart" class="col-sm-3"></div>    
+    <div id="main_scatterplot" class="scatterplot col-sm-4 right-divider"></div>
+    <div id="cluster_scatterplot" class="scatterplot col-sm-4"></div>
+    <div id="info" class="col-sm-1">
+      <div>
+        <ul id="words" class="scrollbox20 nolist">
+        </ul>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!--<div id="quantiles" class="container-fluid">
+  <div class="row">
+    <div id="s1" class="scatterplot col"></div>
+    <div id="s2" class="scatterplot col"></div>
+    <div id="s3" class="scatterplot col"></div>
+    <div id="s4" class="scatterplot col"></div>        
+  </div>
+</div>-->
 
 <div>
-  <ul id="words">
-  </ul>
+  <select id="dimension_select"></select>
+  <svg width="500" height="50" id="slider"></svg>
 </div>
+
 
 <div>
   <h3 id="reset">Reset</h3>
 </div>
 
-<div id="clusters" class="container">
+<div id="clusters" class="container-fluid">
   <div class="row" id="clusters_row">
   </div>
 </div>
 
-<div id="embeddings" class="container">
+<div id="embeddings" class="container-fluid">
   <div class="row" id="embeddings_row">
   </div>
 </div>
 
 <script>
+function updateBarchart(point) {
+  console.log(point);
+  var margin = { top: 20, right: 20, bottom: 40, left: 30 };
+  
+  var width = 200 - margin.left - margin.right;
+  // X scale
+  var x = d3.scaleLinear().range([0, width]);
+  
+  
+  var data = [];
+  for (var i = 0; i < 10; i++) {
+    data.push({
+      i: i,
+      name: "dim" + i,
+      value: point["dim" + i]      
+    });
+    
+    d3.select("#bar" + i)
+      .transition().delay(0).duration(500)
+      .attr('x', function (d) {return x(Math.min(0, point["dim" + i]));})      
+      .attr('width', function (d) {return Math.abs(x(point["dim" + i]) - x(0));});
+  };    
+}
+function barchart(point) {
+  var data = [];
+  for (var i = 0; i < 10; i++) {
+    data.push({
+      i: i,
+      name: "dim" + i,
+      value: point["dim" + i]
+    });
+  }
+
+  var margin = { top: 20, right: 20, bottom: 40, left: 30 };
+  var height = 550 - margin.top - margin.bottom;
+  var width = 200 - margin.left - margin.right;
+
+  // Add svg to
+  var svg = 
+    d3.select('#barchart')
+      .append('svg')
+      .attr('width', width + margin.left + margin.right)
+      .attr('height', height + margin.top + margin.bottom)
+      .append('g')
+      .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+  // X scale
+  var x = d3.scaleLinear().range([0, width]);
+  var y = d3.scaleBand().rangeRound([height, 0]);
+
+
+  var yAxis = 
+    d3.axisLeft(y);
+//      .tickSize(6, 0);
+
+  x.domain(d3.extent(data, function (d) {return d.value;})).nice();
+  y.domain(data.map(function (d) {return d.name;}));
+
+  svg
+    .selectAll('.bar')
+    .data(data)
+    .enter().append('rect')
+      .attr("id", function(d) { return "bar" + d.i; })
+      .attr('class', function (d) {
+        return "bar bar--" + (d.value < 0 ? "negative" : "positive");
+      })
+      .attr('x', function (d) {return x(Math.min(0, d.value));})
+      .attr('y', function (d) {return y(d.name);})
+      .attr('width', function (d) {return Math.abs(x(d.value) - x(0));})
+      .attr('height', 45);
+
+  var tickNegative = 
+    svg.append('g')
+      .attr('class', 'y axis')
+      .attr('transform', 'translate(' + x(0) + ',0)')
+      .call(yAxis);
+      /*.selectAll('.tick')
+      .filter(function (d, i) {return data[i].value < 0;});
+
+  tickNegative.select('line').
+  attr('x2', 6);
+
+  tickNegative.select('text').
+  attr('x', 9).
+  style('text-anchor', 'start');*/
+
+
+  function type(d) {
+    d.value = +d.value;
+    return d;
+  }
+};
 function getPoints(data) {
   var keys = data["columns"];
   
@@ -41,39 +151,40 @@ function getPoints(data) {
   return points;
 }
 d3.json("data/embedding.json", function(err, data) {
-  var WIDTH = 600,
-      HEIGHT = 600;
+  var WIDTH = 500,
+      HEIGHT = 500;
     
   var points = getPoints(data);
   
-  // setup x 
-  var xValue = function(d) { return d["t0"]; }, // data -> value
-      xScale = d3.scaleLinear().range([0, WIDTH]), // value -> display
-      xMap = function(d) { return xScale(xValue(d));}; // data -> display
-
-  // setup y
-  var yValue = function(d) { return d["t1"]; }, // data -> value
-      yScale = d3.scaleLinear().range([HEIGHT, 0]), // value -> display
-      yMap = function(d) { return yScale(yValue(d));}; // data -> display      
-
-  xScale.domain([d3.min(points, xValue) - 1, d3.max(points, xValue) + 1]);
-  yScale.domain([d3.min(points, yValue) - 1, d3.max(points, yValue) + 1]);      
+  barchart(points[0]);
   
   
   var color = d3.scaleOrdinal(d3.schemeCategory20);
   
   var svg = 
-    d3.select("#scatterplots")
-      .append("div").classed("scatterplot", true)
+    d3.select("#main_scatterplot")
       .append("svg")
       .attr("width", WIDTH)
       .attr("height", HEIGHT);
       
+      // setup x 
+      var xValue = function(d) { return d["t0"]; }, // data -> value
+          xScale = d3.scaleLinear().range([0, WIDTH]), // value -> display
+          xMap = function(d) { return xScale(xValue(d));}; // data -> display
+
+      // setup y
+      var yValue = function(d) { return d["t1"]; }, // data -> value
+          yScale = d3.scaleLinear().range([HEIGHT, 0]), // value -> display
+          yMap = function(d) { return yScale(yValue(d));}; // data -> display      
+
+      xScale.domain([d3.min(points, xValue) - 1, d3.max(points, xValue) + 1]);
+      yScale.domain([d3.min(points, yValue) - 1, d3.max(points, yValue) + 1]);
+            
+      
   var origSvg = svg;
       
   var svgChild = 
-    d3.select("#scatterplots")
-      .append("div").classed("scatterplot", true)
+    d3.select("#cluster_scatterplot")
       .append("svg")
       .attr("width", WIDTH)
       .attr("height", HEIGHT);      
@@ -84,7 +195,6 @@ d3.json("data/embedding.json", function(err, data) {
 
   var circles = [];
                         
-  var recentWords = [];
   function draw(selector, data, cluster = -1) {
     selector.html("");
     
@@ -100,10 +210,10 @@ d3.json("data/embedding.json", function(err, data) {
           if (d.cluster == cluster) {
             return 1.0;
           } else {
-            return 0;
+            return 0.2;
           }
         } else {
-          return 0;
+          return 0.2;
         }        
       })
       .attr("r", function(d) {
@@ -129,14 +239,24 @@ d3.json("data/embedding.json", function(err, data) {
         }
       })      
       .style("fill", function(d) { return color(d.cluster); })
-      .on("mouseover", function(d) {                    
-        if (recentWords.length >= 10) {
-          recentWords.shift();
+      .on("mouseenter", function(d) {
+        updateBarchart(d);
+        
+        var r = 3;
+        if (cluster != -1) {
+          if (d.cluster == cluster) {
+            r = 5;
+          } else {
+            r = 3;
+          }
+        } else {
+          r = 3;
         }
-        recentWords.push("Cluster " + d.cluster + " - " + d.word);
-
-        d3.select("#words").html("");
-        d3.select("#words").selectAll("li").data(recentWords).enter().append("li").text(function(x) { return x; });
+        d3.select(this).transition().delay(0).duration(75).attr("r", 20).attr("fill-opacity", 1).attr("stroke-width", 2).attr("stroke-opacity", 1); 
+        
+        //.transition();//.duration(300).attr("r", r);
+//        d3.select(this).attr("r", 15);
+        d3.select("#words").insert("li", ":first-child").text(d.word).style("color", color(d.cluster));
 
         tooltip
           .transition()
@@ -150,6 +270,27 @@ d3.json("data/embedding.json", function(err, data) {
       })
       .on("mouseout", function(d) {        
         tooltip.html("");
+        var r = 3;
+        if (cluster != -1) {
+          if (d.cluster == cluster) {
+            r = 5;
+          } else {
+            r = 3;
+          }
+        } else {
+          r = 3;
+        }
+        d3.select(this).transition().duration(750).attr("r", r).attr("stroke-width", 1).style("stroke-opacity", function(d) {
+          if (cluster != -1) {
+            if (d.cluster == cluster) {
+              return 1.0;
+            } else {
+              return 0.2;
+            }
+          } else {
+            return 0.2;
+          }        
+        });
       });
   }
   draw(svg, points, -1);
@@ -159,149 +300,220 @@ d3.json("data/embedding.json", function(err, data) {
   });
   var num_clusters = _.unique(_.map(points, function(x) { return x["cluster"]; }));
   for (var i = 0; i < num_clusters.length; i++) {
-    var clusterps = _.filter(points, function(x) { return x["cluster"] == i; });
-    var ps = _.sample(clusterps, 10);
+    var clusterPoints = _.filter(points, function(x) { return x["cluster"] == i; });
+    var samples = _.sample(clusterPoints, 50);
     
     var cluster = d3.select("#clusters_row")
       .append("div")
       .attr("class", "col-md-3");
     
     cluster
-      .datum([i, clusterps])
-      .append("h3").text("Cluster " + i)
+      .datum([i, clusterPoints])
+      .append("h5").text("Cluster " + (i + 1)).classed("linklike", true).style("color", function(d) { return color(d[0]); })
       .on("click", function(d) {
         var i = d[0];
-        var clusterps = d[1];
+        var clusterPoints = d[1];
         draw(svg, points, i);
-        draw(svgChild, clusterps, i, true);
+        draw(svgChild, clusterPoints, i, true);
       });
       
-    var list = cluster
-      .append("ul");
     
-    list
+    cluster
+      .append("ul").classed("scrollbox", true)    
       .selectAll("li")
-      .data(ps)
+      .data(samples)
       .enter()
       .append("li")
       .html(function(x) { return x["word"]; });
   }
   
+  d3
+    .select("#dimension_select")
+    .selectAll("option")
+    .data([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    .enter()
+    .append("option").attr("value", function(i) { return i+1; }).text(function(i) { return "Dimension " + (i+1); });
+  d3.select("#dimension_select")
+    .on("change", function() {
+      console.log("HMM");
+      sd = +d3.select(this).property("value") - 1;
+      console.log(sd);
+      createSlider(sd);
+    });
   
-  
-  
+  createSlider(0);
   for (var i = 0; i < 10; i++) {
+    
+    
     var ps = _.sortBy(points, function(x) { return x["dim" + i]; });
     var topPs = _.last(ps, 10).reverse();
     var bottomPs = _.first(ps, 10);
-
     
-    var embeddings1 = d3.select("#embeddings_row")
-      .append("div")
-      .attr("class", "col-md-3");
-      
-      var embeddings2 = d3.select("#embeddings_row")
+    var embeddings = 
+      d3.select("#embeddings_row")
         .append("div")
-        .attr("class", "col-md-3");      
+        .attr("class", "col-md-4 embedding");
+        
+    embeddings
+      .datum(i)
+      .append("h3").text("Dimension " + (i + 1))
+      .on("click", function(i) {
+        console.log(i);
+        var dimd = "dim" + i;
+        var ds = _.sortBy(_.map(points, function(x) { return x[dimd]; }), function(x) { return x; });
+        var qs = _.map([0, 0.05, 0.5, 0.95, 1.0], function(q) { return d3.quantile(ds, q); });
+        console.log(qs);
+        var p1s = _.filter(points, function(x) { return (x[dimd] >= qs[0] && x[dimd] <= qs[1]); });
+        var p2s = _.filter(points, function(x) { return (x[dimd] >= qs[1] && x[dimd] <= qs[2]); });
+        var p3s = _.filter(points, function(x) { return (x[dimd] >= qs[2] && x[dimd] <= qs[3]); });
+        var p4s = _.filter(points, function(x) { return (x[dimd] >= qs[3] && x[dimd] <= qs[4]); });                        
+        
+        var s1 = 
+          d3.select("#s1").html("")
+            .append("svg")
+            .attr("width", WIDTH)
+            .attr("height", HEIGHT);
+        draw(s1, p1s);
+
+        var s2 = 
+          d3.select("#s2").html("")
+            .append("svg")
+            .attr("width", WIDTH)
+            .attr("height", HEIGHT);
+        draw(s2, p2s);
+        
+        var s3 = 
+          d3.select("#s3").html("")
+            .append("svg")
+            .attr("width", WIDTH)
+            .attr("height", HEIGHT);
+        draw(s3, p3s);
+        
+        var s4 = 
+          d3.select("#s4").html("")
+            .append("svg")
+            .attr("width", WIDTH)
+            .attr("height", HEIGHT);
+        draw(s4, p4s);
+                                
+      });
+      
+    var row = 
+      embeddings.append("div").classed("row", true)
+      
+    
+    
+    var embeddings1 = row
+      .append("div")
+      .attr("class", "col");
+      
+    var embeddings2 = row
+      .append("div")
+      .attr("class", "col");      
     
     embeddings1
       .datum([i, topPs, bottomPs])
-      .append("h3").text("Top Embedding " + i)
+      .append("h5").text("Low")
       .append("ul");
       
       embeddings2
         .datum([i, topPs, bottomPs])
-        .append("h3").text("Bottom Embedding " + i)
-        .append("ul");
-              
-/*      .on("click", function(d) {
-        var i = d[0];
-        var clusterps = d[1];
-        draw(svg, points, i);
-        draw(svgChild, clusterps, i, true);
-      });*/
+        .append("h5").text("High")
+        .append("ul");        
       
 
     embeddings1
       .selectAll("li")
-      .data(topPs)
+      .data(bottomPs)
       .enter()
       .append("li")
       .html(function(x) { return x["word"]; });    
       
       embeddings2
         .selectAll("li")
-        .data(bottomPs)
+        .data(topPs)
         .enter()
         .append("li")
         .html(function(x) { return x["word"]; });      
   }
   
   
-  
-  
-  var dim = "dim0";
-  var dim0 = _.map(points, function(p) { return p.dim0; });  
-  var dim0_min = _.min(dim0);
-  var dim0_max = _.max(dim0);
-  
-  var svg = d3.select("svg"),
-      margin = {right: 50, left: 50},
-      width = +svg.attr("width") - margin.left - margin.right,
-      height = 20;
+  function createSlider(sDim) {
+    //dim9 = music
+    var sliderDim = "dim" + sDim;
+    var dim0 = _.map(points, function(p) { return p[sliderDim]; });  
+    var dim0_min = _.min(dim0);
+    var dim0_max = _.max(dim0);
 
-  var x = d3.scaleLinear()
-      .domain([dim0_min, dim0_max])
-      .range([0, width])
-      .clamp(true);
+    var sliderSvg = d3.select("#slider").html(""),
+        margin = {right: 50, left: 50},
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = 20;
 
-  var slider = svg.append("g")
-      .attr("class", "slider")
-      .attr("transform", "translate(" + margin.left + "," + height / 2 + ")");
+    var x = d3.scaleLinear()
+        .domain([dim0_min, dim0_max])
+        .range([0, width])
+        .clamp(true);
 
-  slider.append("line")
-      .attr("class", "track")
-      .attr("x1", x.range()[0])
-      .attr("x2", x.range()[1])
-    .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-      .attr("class", "track-inset")
-    .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-      .attr("class", "track-overlay")
-      .call(d3.drag()
-          .on("start.interrupt", function() { slider.interrupt(); })
-          .on("start drag", function() { hue(x.invert(d3.event.x)); }));
+    var slider = sliderSvg.append("g")
+        .attr("class", "slider")
+        .attr("transform", "translate(" + margin.left + "," + height / 2 + ")");
 
-  slider.insert("g", ".track-overlay")
-      .attr("class", "ticks")
-      .attr("transform", "translate(0," + 18 + ")")
-    .selectAll("text")
-    .data(x.ticks(10))
-    .enter().append("text")
-      .attr("x", x)
-      .attr("text-anchor", "middle")
-      .text(function(d) { return d + "°"; });
+    slider.append("line")
+        .attr("class", "track")
+        .attr("x1", x.range()[0])
+        .attr("x2", x.range()[1])
+      .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+        .attr("class", "track-inset")
+      .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+        .attr("class", "track-overlay")
+        .call(d3.drag()
+            .on("start.interrupt", function() { slider.interrupt(); })
+            .on("start drag", function() { hue(x.invert(d3.event.x)); }));
 
-  var handle = slider.insert("circle", ".track-overlay")
-      .attr("class", "handle")
-      .attr("r", 9);
+    slider.insert("g", ".track-overlay")
+        .attr("class", "ticks")
+        .attr("transform", "translate(0," + 18 + ")")
+      .selectAll("text")
+      .data(x.ticks(10))
+      .enter().append("text")
+        .attr("x", x)
+        .attr("text-anchor", "middle")
+        .text(function(d) { return d; });
+
+    var handle = slider.insert("circle", ".track-overlay")
+        .attr("class", "handle")
+        .attr("r", 9);    
+        
+    function hue(h) {
+      handle.attr("cx", x(h));
+
+      origSvg.selectAll("circle").data(points)
+        .attr("r", function(p) {
+          var x  =Math.pow(sigmoid(1.0 / (Math.pow(h - p[sliderDim], 2) + 0.01)), 5) * 10 ;
+          return x;
+        })
+        .attr("fill-opacity", function(p) {
+          return Math.pow(sigmoid(1.0 / (Math.pow(h - p[sliderDim], 2) + 0.01)), 5) * 0.6;
+        })
+
+        svgChild.selectAll("circle").data(points)
+          .attr("r", function(p) {
+            var x  =Math.pow(sigmoid(1.0 / (Math.pow(h - p[sliderDim], 2) + 0.01)), 5) * 10 ;
+            return x;
+          })
+          .attr("fill-opacity", function(p) {
+            return Math.pow(sigmoid(1.0 / (Math.pow(h - p[sliderDim], 2) + 0.01)), 5) * 0.6;
+          })      
+    }        
+  }
+
 
   function sigmoid(t) {
     return 1/(1+Math.pow(Math.E, -t));
   }
 
-  function hue(h) {
-    origSvg.selectAll("circle").data(points)
-      .attr("r", function(p) {
-        var x  =Math.pow(sigmoid(1.0 / (Math.pow(h - p[dim], 2) + 0.01)), 4) * 10;
-        if (x > 9.5) {// (Math.abs(h - p[dim]) < 0.1) {
-          console.log(p.word);
-        }
-        return x;
-      })
-      .attr("fill-opacity", function(p) {
-        return Math.pow(sigmoid(1.0 / (Math.pow(h - p[dim], 2) + 0.01)), 4);
-      })
-  }
+
   
   
 });

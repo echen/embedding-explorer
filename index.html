@@ -25,40 +25,14 @@
 
   <script src="app.js"></script>  
   <script src="routes.js"></script>    
-  <script src="lstm-explorer.js"></script>
 
   <link rel="stylesheet" type="text/css" href="app.css">
   <title>Embedding Explorer</title>
 </head>
 
 <body ng-app="app">
-  <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-    <a class="navbar-brand" href="#">Embedding Explorer</a>
-
-    <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-      <ul class="navbar-nav mr-auto">
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Networks
-          </a>
-          <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <a class="dropdown-item" href="#/network?file=counter">Counter</a>
-            <a class="dropdown-item" href="#/network?file=selective_counter">Selective Counter</a>
-            <a class="dropdown-item" href="#/network?file=state_memorizer">State Memorizer</a>
-            <a class="dropdown-item" href="#/network?file=copy_machine">Copy Machine</a>
-          </div>          
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#/gallery/">Gallery</a>
-        </li>        
-        <li class="nav-item">
-          <a class="nav-link" href="http://blog.echen.me/2017/05/30/exploring-lstms/">Tutorial</a>
-        </li>        
-        <li class="nav-item">
-          <a class="nav-link" href="#/about">About</a>
-        </li>        
-      </ul>
-    </div>
+  <nav class="navbar navbar-expand-sm navbar-light bg-light">
+    <a class="navbar-brand" href="#">Embedding Explorer</a>   
   </nav>
 
   <div class="container" id="main" ng-view></div>

@@ -1,27 +1,32 @@
 body {
-  background-color: #2A3A5D;
+/*  background-color: #f8f9fa;*/
 }
 
-.container-fluid {
+/*#main.container {
   margin-left: auto;
   margin-right: auto;
   width: 90%;
   min-height: 100%;
-}
+}*/
 
 #main {
   background-color: #fff;
-  box-shadow: 0px 0px 10px #142438;
-  padding: 15px;
+/*  box-shadow: 0px 0px 10px #142438;*/
+  padding-top: 15px;
   
   margin-left: auto;
   margin-right: auto;
-  min-width: 95% !important;  
+  min-width: 98% !important;
 }
 
 .tooltip {
   font-weight: bold;
   background-color: white;
+  border-color: black;
+  border-style: solid;
+  border-width: 0.5px;
+  padding: 0.5px 4px;
+  border-radius: 5px;
 }
 
 .scatterplot {
@@ -29,27 +34,54 @@ body {
 }
 
 circle:hover {
-  r: 15;
+//  r: 15;
   stroke: black !important;
   stroke-opacity: 1 !important;
   stroke-width: 2;
+  fill-opacity: 1 !important;
 }
 
+.right-divider {
+/*  border-right-color: rgba(0, 0, 0, .5);
+  border-right-style: solid;
+  border-right-width: 0.1;*/
+}
 text {
   background-color: white;
 }
 
+ul {
+  padding-left: 1.5em;
+/*  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  text-align: center;*/
+}
 
+ul.nolist {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;  
+}
 
+.scrollbox20 {
+  overflow-y: scroll;
+  height: 30em;
+}
 
+.scrollbox {
+  overflow-y: scroll;
+  height: 15em;
+}
 
+.embedding {
+  padding-bottom: 20px;
+}
 
-
-
-
-
-
-
+.linklike {
+  text-decoration: underline;
+  cursor: pointer;
+}
 
 
 
@@ -90,4 +122,36 @@ text {
   stroke: #000;
   stroke-opacity: 0.5;
   stroke-width: 1.25px;
+}
+
+
+.bar {
+  padding: 5px;
+}
+
+.bar--positive {
+  fill: steelblue;
+}
+
+.bar--negative {
+  fill: brown;
+}
+
+.axis text {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+/* HACK to hide axis */
+g.tick text {
+  fill-opacity: 0;
+}
+g.tick line {
+  opacity: 0;
 }
