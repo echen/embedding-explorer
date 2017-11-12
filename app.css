@@ -1,17 +1,5 @@
-body {
-/*  background-color: #f8f9fa;*/
-}
-
-/*#main.container {
-  margin-left: auto;
-  margin-right: auto;
-  width: 90%;
-  min-height: 100%;
-}*/
-
 #main {
   background-color: #fff;
-/*  box-shadow: 0px 0px 10px #142438;*/
   padding-top: 15px;
   
   margin-left: auto;
@@ -34,7 +22,6 @@ body {
 }
 
 circle:hover {
-//  r: 15;
   stroke: black !important;
   stroke-opacity: 1 !important;
   stroke-width: 2;
@@ -55,10 +42,14 @@ ul.nolist {
   margin: 0;  
 }
 
-.scrollbox20 {
-  overflow-y: scroll;
+#words {
+  overflow-y: hidden;
   height: 30em;
 }
+/*.scrollbox20 {
+  overflow-y: scroll;
+  height: 30em;
+}*/
 
 .scrollbox {
   overflow-y: scroll;
@@ -78,8 +69,13 @@ ul.nolist {
   padding: 0px !important;
 }
 
-
-
+#clusters_row, #embeddings_row {
+  padding-top: 15px;
+}
+#embeddings h5, h6 {
+  padding-bottom: 0;
+  margin-bottom: 1px;
+}
 
 /* SLIDER */
 .ticks {
@@ -105,7 +101,7 @@ ul.nolist {
 
 .track-overlay {
   pointer-events: stroke;
-  stroke-width: 50px;
+  stroke-width: 30px;
   stroke: transparent;
   cursor: crosshair;
 }
