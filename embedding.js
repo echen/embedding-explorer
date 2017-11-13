@@ -200,8 +200,16 @@ d3.json("data/embedding50.json", function(err, data) {
     var clusterBox = cw.append("div").classed("box", true);
     var clusterPoints = _.filter(points, function(x) { return x["cluster"] == d.cluster; });
     var samples = _.sample(clusterPoints, 25);
-    clusterBox.append("h3")
-      .text("Belongs to Cluster " + (d.cluster + 1));
+    clusterBox
+      .datum(d.cluster)
+      .append("h3")
+      .text("Belongs to Cluster " + (d.cluster + 1))
+      .classed("linklike text-primary", true)
+      .on("click", function(i) {
+        var clusterPoints = _.filter(points, function(x) { return x["cluster"] == i; });
+        draw(embeddingSvg, points, i);        
+        draw(clusterEmbeddingSvg, clusterPoints, i);
+      });
     clusterBox.append("p")
       .html(coloredSpans(samples));
 
@@ -323,7 +331,7 @@ d3.json("data/embedding50.json", function(err, data) {
             var i = d[0];
             var clusterPoints = d[1];
             draw(embeddingSvg, points, i);
-            draw(clusterEmbeddingSvg, clusterPoints, i, true);
+            draw(clusterEmbeddingSvg, clusterPoints, i);
           });
 
       cluster
