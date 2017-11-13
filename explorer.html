@@ -20,19 +20,28 @@
 
 <ul class="nav nav-tabs" id="myTab" role="tablist">
   <li class="nav-item">
-    <a target="_self" class="nav-link active" id="clusters-tab" data-toggle="tab" href="#clusters_div" role="tab" aria-controls="home" aria-selected="true">Clusters</a>
+    <a target="_self" class="nav-link active" id="clicked_word-tab" data-toggle="tab" href="#clicked_word_div" role="tab" aria-controls="profile" aria-selected="false">Clicked Word</a>
+  </li>  
+  <li class="nav-item">
+    <a target="_self" class="nav-link" id="clusters-tab" data-toggle="tab" href="#clusters_div" role="tab" aria-controls="home" aria-selected="true">Clusters</a>
   </li>
   <li class="nav-item">
     <a target="_self" class="nav-link" id="embedding_dims-tab" data-toggle="tab" href="#embedding_dims_div" role="tab" aria-controls="profile" aria-selected="false">Embedding Dimensions</a>
   </li>
 </ul>
 <div class="tab-content" id="myTabContent">
-  <div class="tab-pane fade show active" id="clusters_div" role="tabpanel" aria-labelledby="home-tab">
+  <div class="tab-pane fade show active" id="clicked_word_div" role="tabpanel" aria-labelledby="profile-tab">
+    <div id="clicked_word" class="container-fluid">
+    </div>
+  </div>
+    
+  <div class="tab-pane fade" id="clusters_div" role="tabpanel" aria-labelledby="home-tab">
     <div id="clusters" class="container-fluid">
       <div class="row" id="clusters_row">
       </div>
     </div>
   </div>
+  
   <div class="tab-pane fade" id="embedding_dims_div" role="tabpanel" aria-labelledby="profile-tab">
     <div id="embeddings" class="container-fluid">
       <div class="row" id="embeddings_row">
@@ -42,9 +51,15 @@
 </div>
 
 <script>
-function updateBarchart(point) {
+var NUM_DIMENSIONS = 50;
+var DIMENSIONS = [];
+for (var i = 0; i < 50; i++) {
+  DIMENSIONS.push(i);
+}
+
+function updateBarchart(point, where = "#barchart", ider = "") {
   // HACK
-  d3.select("#barchart").style("opacity", 1);
+  d3.select(where).style("opacity", 1);
   
   var margin = { top: 0, right: 5, bottom: 0, left: 5 };  
   var width = 230 - margin.left - margin.right;
@@ -53,7 +68,7 @@ function updateBarchart(point) {
   var colorScale = d3.scaleLinear().range([0, 1]).domain([-3, 3]);
   
   var data = [];
-  for (var i = 0; i < 10; i++) {
+  for (var i = 0; i < NUM_DIMENSIONS; i++) {
     data.push({
       i: i,
       name: "dim" + i,
@@ -61,18 +76,18 @@ function updateBarchart(point) {
     });
     
     var v = point["dim" + i];
-    d3.select("#bar" + i)
+    d3.select("#" + ider + "bar" + i)
       .transition().delay(0).duration(200)
       .attr("fill", function(d) { return d3.interpolateRdBu(colorScale(v)); })
       .attr('x', function (d) {return margin.left + x(Math.min(0, v));})
       .attr('width', function (d) {return Math.abs(x(v) - x(0));})
-      .attr('height', 45);
+      .attr('height', 9);
   };    
 }
 
-function createBarchart(point) {
+function createBarchart(point, where = "#barchart", ider = "") {
   var data = [];
-  for (var i = 9; i >= 0; i--) {
+  for (var i = NUM_DIMENSIONS - 1; i >= 0; i--) {
     data.push({
       i: i,
       name: "dim" + i,
@@ -85,7 +100,7 @@ function createBarchart(point) {
   var width = 230 - margin.left - margin.right;
 
   var svg = 
-    d3.select('#barchart')
+    d3.select(where)
       .append('svg')
       .attr('width', width + margin.left + margin.right)
       .attr('height', height + margin.top + margin.bottom)
@@ -99,11 +114,11 @@ function createBarchart(point) {
     .selectAll('.bar')
     .data(data)
     .enter().append('rect')
-      .attr("id", function(d) { return "bar" + d.i; })
+      .attr("id", function(d) { return ider + "bar" + d.i; })
       .attr('x', function (d) {return x(Math.min(0, d.value));})
       .attr('y', function (d) {return y(d.name);})
       .attr('width', function (d) {return Math.abs(x(d.value) - x(0));})
-      .attr('height', 40);
+      .attr('height', 9);
 };
 
 function getPoints(data) {
@@ -159,7 +174,19 @@ function circleRadius(point, cluster) {
   }        
 }
 
-d3.json("data/embedding.json", function(err, data) {
+function embeddingDist(x, y) {
+  var dist = 0;
+  for (var i = 0; i < NUM_DIMENSIONS; i++) {
+    dist += Math.pow(x["dim" + i] - y["dim" + i], 2)
+  }
+  return dist;
+}
+function nearestNeighbors(points, word, n) {
+  var ps = _.sortBy(points, function(p) { return embeddingDist(p, word); });
+  return ps.slice(1, n + 1);
+}
+
+d3.json("data/embedding50.json", function(err, data) {
   var WIDTH = 500,
       HEIGHT = 500;
     
@@ -213,6 +240,73 @@ d3.json("data/embedding.json", function(err, data) {
       .attr("r", function(d) { return circleRadius(d, cluster); })
       .attr('fill-opacity', function(d) { return circleOpacity(d, cluster); })
       .style("fill", function(d) { return color(d.cluster); })
+      .on("click", function(d) {
+
+var cw = d3.select("#clicked_word");
+cw.html("");
+
+cw.append("h1")
+  .text(d.word);
+
+function coloredSpans(ps) {
+  var ret = _.map(ps,
+      function(p) {
+        return "<span style='color:" + color(p.cluster) + "'>" + p.word + "</span>";
+      }
+    );
+
+  return ret.join(", ");
+}  
+
+var nnBox = cw.append("div").classed("box", true);
+var nns = nearestNeighbors(points, d, 25);
+nnBox.append("h3")
+  .text("Nearest Neigbors");
+nnBox.append("p")
+  .html(coloredSpans(nns));
+
+var clusterBox = cw.append("div").classed("box", true);
+var clusterPoints = _.filter(points, function(x) { return x["cluster"] == d.cluster; });
+var samples = _.sample(clusterPoints, 25);
+clusterBox.append("h3")
+  .text("Belongs to Cluster " + d.cluster);
+clusterBox.append("p")
+  .html(coloredSpans(samples));
+
+var topDimsBox = cw.append("div").classed("box", true).classed("container-fluid", true);
+topDimsBox.append("h3").text("Top Dimensions");
+var topDimsBoxRow = topDimsBox.append("div").classed("row", true);
+var cbc = topDimsBoxRow.append("div").attr("id", "clickedBarchart").classed("col-sm-2", true);
+var tdr = topDimsBoxRow.append("div").attr("id", "clickedTopDims").classed("col-sm-10", true);
+    
+    
+var topDims = _.sortBy(DIMENSIONS, function(i) { return -1 * Math.abs(d["dim" + i]); }).slice(0, 5);
+for (var j = 0; j < 5; j++) {
+  var i = topDims[j];
+  var ps = _.sortBy(points, function(x) { return x["dim" + i]; });
+  var topPs = _.last(ps, 25).reverse();
+  var bottomPs = _.first(ps, 25);
+  
+  var thePs = [];
+  if (d["dim" + i] > 0) {
+    thePs = topPs;
+  } else {
+    thePs = bottomPs;
+  }
+  var dBox = tdr.append("div").classed("box", true);
+  dBox.append("h4")
+    .text("Dimension " + i);
+  dBox.append("p").html(coloredSpans(thePs));
+}       
+
+    
+createBarchart(d, "#clickedBarchart", "clicked");
+updateBarchart(d, "#clickedBarchart", "clicked");
+        
+        
+        
+        
+      })
       .on("mouseenter", function(d) {
         updateBarchart(d);
         
@@ -271,7 +365,7 @@ d3.json("data/embedding.json", function(err, data) {
       var cluster = 
         d3.select("#clusters_row")
           .append("div")
-          .attr("class", "col-md-3");
+          .attr("class", "col-md-3 clusterbox");
 
       cluster
         .datum([i, clusterPoints])
@@ -313,7 +407,7 @@ d3.json("data/embedding.json", function(err, data) {
   createSlider(0);
   
   function createEmbeddingLists() {
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < NUM_DIMENSIONS; i++) {
       var ps = _.sortBy(points, function(x) { return x["dim" + i]; });
       var topPs = _.last(ps, 10).reverse();
       var bottomPs = _.first(ps, 10);
@@ -344,7 +438,8 @@ d3.json("data/embedding.json", function(err, data) {
           .data(colPoints)
           .enter()
           .append("li")
-          .html(function(x) { return x["word"]; });
+          .text(function(p) { return p.word; })
+          .style("color", function(p) { return color(p.cluster); });
       }
 
       createEmbeddingCol("Low", bottomPs);

@@ -32,14 +32,14 @@ text {
   background-color: white;
 }
 
-ul {
-  padding-left: 1.5em;
+ul, li {
+  list-style-type: none;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
-ul.nolist {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;  
+.clusterbox {
+  margin-bottom: 20px;
 }
 
 #words {
@@ -76,6 +76,25 @@ ul.nolist {
   padding-bottom: 0;
   margin-bottom: 1px;
 }
+
+#clicked_word {
+  margin-top: 10px;
+}
+
+.box {
+  margin: 20px 0 30px;
+}
+.box h3 {
+  text-decoration: underline;
+}
+
+#clickedBarchart {
+  margin-top: 10px;
+}
+#clickedTopDims .box:first-child {
+  margin-top: 0;
+}
+
 
 /* SLIDER */
 .ticks {
