@@ -278,8 +278,7 @@ topDimsBox.append("h3").text("Top Dimensions");
 var topDimsBoxRow = topDimsBox.append("div").classed("row", true);
 var cbc = topDimsBoxRow.append("div").attr("id", "clickedBarchart").classed("col-sm-2", true);
 var tdr = topDimsBoxRow.append("div").attr("id", "clickedTopDims").classed("col-sm-10", true);
-    
-    
+        
 var topDims = _.sortBy(DIMENSIONS, function(i) { return -1 * Math.abs(d["dim" + i]); }).slice(0, 5);
 for (var j = 0; j < 5; j++) {
   var i = topDims[j];
@@ -295,7 +294,7 @@ for (var j = 0; j < 5; j++) {
   }
   var dBox = tdr.append("div").classed("box", true);
   dBox.append("h4")
-    .text("Dimension " + i);
+    .text("Dimension " + (+i+1));
   dBox.append("p").html(coloredSpans(thePs));
 }       
 
@@ -396,7 +395,7 @@ updateBarchart(d, "#clickedBarchart", "clicked");
   d3
     .select("#dimension_select")
     .selectAll("option")
-    .data([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    .data(DIMENSIONS)
     .enter()
     .append("option").attr("value", function(i) { return i+1; }).text(function(i) { return "Slide Dimension " + (i+1); });
   d3.select("#dimension_select")
