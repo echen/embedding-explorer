@@ -95,6 +95,10 @@ ul, li {
   margin-top: 0;
 }
 
+#clicked_word .box.container-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
 
 /* SLIDER */
 .ticks {

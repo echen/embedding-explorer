@@ -2,8 +2,8 @@ app.config(["$routeProvider", "$compileProvider", function($routeProvider, $comp
     $routeProvider.    
       when("/", {
         templateUrl: "explorer.html",
-      }).            
+      }).
       otherwise({
-        redirectTo: "/explorer"
+        redirectTo: "/"
       });
   }]);
