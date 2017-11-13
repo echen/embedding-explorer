@@ -201,7 +201,7 @@ d3.json("data/embedding50.json", function(err, data) {
     var clusterPoints = _.filter(points, function(x) { return x["cluster"] == d.cluster; });
     var samples = _.sample(clusterPoints, 25);
     clusterBox.append("h3")
-      .text("Belongs to Cluster " + d.cluster);
+      .text("Belongs to Cluster " + (d.cluster + 1));
     clusterBox.append("p")
       .html(coloredSpans(samples));
 
