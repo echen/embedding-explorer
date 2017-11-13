@@ -173,6 +173,68 @@ d3.json("data/embedding50.json", function(err, data) {
       .attr("class", "tooltip")
       .style("opacity", 0);
 
+  function createClickedWord(d) {
+    var cw = d3.select("#clicked_word");
+    cw.html("");
+
+    cw.append("h1")
+      .text(d.word);
+
+    function coloredSpans(ps) {
+      var ret = _.map(ps,
+          function(p) {
+            return "<span style='color:" + color(p.cluster) + "'>" + p.word + "</span>";
+          }
+        );
+
+      return ret.join(", ");
+    }  
+
+    var nnBox = cw.append("div").classed("box", true);
+    var nns = nearestNeighbors(points, d, 25);
+    nnBox.append("h3")
+      .text("Nearest Neigbors");
+    nnBox.append("p")
+      .html(coloredSpans(nns));
+
+    var clusterBox = cw.append("div").classed("box", true);
+    var clusterPoints = _.filter(points, function(x) { return x["cluster"] == d.cluster; });
+    var samples = _.sample(clusterPoints, 25);
+    clusterBox.append("h3")
+      .text("Belongs to Cluster " + d.cluster);
+    clusterBox.append("p")
+      .html(coloredSpans(samples));
+
+    var topDimsBox = cw.append("div").classed("box", true).classed("container-fluid", true);
+    topDimsBox.append("h3").text("Top Dimensions");
+    var topDimsBoxRow = topDimsBox.append("div").classed("row", true);
+    var cbc = topDimsBoxRow.append("div").attr("id", "clickedBarchart").classed("col-sm-2", true);
+    var tdr = topDimsBoxRow.append("div").attr("id", "clickedTopDims").classed("col-sm-10", true);
+
+    var topDims = _.sortBy(DIMENSIONS, function(i) { return -1 * Math.abs(d["dim" + i]); }).slice(0, 5);
+    for (var j = 0; j < 5; j++) {
+      var i = topDims[j];
+      var ps = _.sortBy(points, function(x) { return x["dim" + i]; });
+      var topPs = _.last(ps, 25).reverse();
+      var bottomPs = _.first(ps, 25);
+
+      var thePs = [];
+      if (d["dim" + i] > 0) {
+        thePs = topPs;
+      } else {
+        thePs = bottomPs;
+      }
+      var dBox = tdr.append("div").classed("box", true);
+      dBox.append("h4")
+        .text("Dimension " + (+i+1));
+      dBox.append("p").html(coloredSpans(thePs));
+    }       
+
+
+    createBarchart(d, "#clickedBarchart", "clicked");
+    updateBarchart(d, "#clickedBarchart", "clicked");
+  }
+  createClickedWord(_.sample(points));
   var recentWords = [];
   function draw(selector, data, cluster = -1) {
     selector.html("");
@@ -189,70 +251,7 @@ d3.json("data/embedding50.json", function(err, data) {
       .attr('fill-opacity', function(d) { return circleOpacity(d, cluster); })
       .style("fill", function(d) { return color(d.cluster); })
       .on("click", function(d) {
-
-var cw = d3.select("#clicked_word");
-cw.html("");
-
-cw.append("h1")
-  .text(d.word);
-
-function coloredSpans(ps) {
-  var ret = _.map(ps,
-      function(p) {
-        return "<span style='color:" + color(p.cluster) + "'>" + p.word + "</span>";
-      }
-    );
-
-  return ret.join(", ");
-}  
-
-var nnBox = cw.append("div").classed("box", true);
-var nns = nearestNeighbors(points, d, 25);
-nnBox.append("h3")
-  .text("Nearest Neigbors");
-nnBox.append("p")
-  .html(coloredSpans(nns));
-
-var clusterBox = cw.append("div").classed("box", true);
-var clusterPoints = _.filter(points, function(x) { return x["cluster"] == d.cluster; });
-var samples = _.sample(clusterPoints, 25);
-clusterBox.append("h3")
-  .text("Belongs to Cluster " + d.cluster);
-clusterBox.append("p")
-  .html(coloredSpans(samples));
-
-var topDimsBox = cw.append("div").classed("box", true).classed("container-fluid", true);
-topDimsBox.append("h3").text("Top Dimensions");
-var topDimsBoxRow = topDimsBox.append("div").classed("row", true);
-var cbc = topDimsBoxRow.append("div").attr("id", "clickedBarchart").classed("col-sm-2", true);
-var tdr = topDimsBoxRow.append("div").attr("id", "clickedTopDims").classed("col-sm-10", true);
-        
-var topDims = _.sortBy(DIMENSIONS, function(i) { return -1 * Math.abs(d["dim" + i]); }).slice(0, 5);
-for (var j = 0; j < 5; j++) {
-  var i = topDims[j];
-  var ps = _.sortBy(points, function(x) { return x["dim" + i]; });
-  var topPs = _.last(ps, 25).reverse();
-  var bottomPs = _.first(ps, 25);
-  
-  var thePs = [];
-  if (d["dim" + i] > 0) {
-    thePs = topPs;
-  } else {
-    thePs = bottomPs;
-  }
-  var dBox = tdr.append("div").classed("box", true);
-  dBox.append("h4")
-    .text("Dimension " + (+i+1));
-  dBox.append("p").html(coloredSpans(thePs));
-}       
-
-    
-createBarchart(d, "#clickedBarchart", "clicked");
-updateBarchart(d, "#clickedBarchart", "clicked");
-        
-        
-        
-        
+        createClickedWord(d);
       })
       .on("mouseenter", function(d) {
         updateBarchart(d);
